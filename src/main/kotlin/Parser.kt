@@ -21,12 +21,12 @@ private fun parseCall(call: String): Call {
 }
 
 private fun parseExpression(expression: CharSequence): Expression {
-    if (expression == "element") return Expression(listOf(ElementToken()), ExpressionType.ARITHMETIC)
+    if (expression == "element") return Expression(ElementToken())
 
     return try {
         val number = parseInt(expression, 0, expression.length, 10)
 
-        Expression(listOf(NumberToken(number)), ExpressionType.ARITHMETIC)
+        Expression(NumberToken(number))
     } catch (ex: Exception) {
         if (expression.first() != '(' || expression.last() != ')') throw SyntaxErrorException()
         val expressionWithoutBrackets = expression.subSequence(1, expression.length - 1)
@@ -46,7 +46,7 @@ private fun parseExpression(expression: CharSequence): Expression {
         val rightPart = parseExpression(rightPartString)
 
         operation.verifyOperandTypes(leftPart.type, rightPart.type)
-        return Expression(leftPart.tokens + rightPart.tokens + operationToken, operation.expressionOutputType)
+        return Expression(leftPart.tokens + rightPart.tokens + operationToken)
     }
 }
 
@@ -89,29 +89,43 @@ enum class CallType(val typeString: String, val expressionType: ExpressionType) 
     }
 }
 
-data class Expression(
+class Expression(
     /**
      * Tokens in reverse Polish notation.
      */
     val tokens: List<Token>,
-    val type: ExpressionType,
-)
+) {
+    constructor(token: Token) : this(listOf(token))
+
+    val type: ExpressionType = tokens.last().expressionType
+}
 
 enum class ExpressionType {
     BOOLEAN, ARITHMETIC,
 }
 
-interface Token
+abstract class Token {
+    abstract val expressionType: ExpressionType
+}
 
 data class OperationToken(
     val operation: Operation,
-) : Token
+) : Token() {
+    override val expressionType: ExpressionType
+        get() = operation.expressionOutputType
+}
 
 data class NumberToken(
     val number: Int
-) : Token
+) : Token() {
+    override val expressionType: ExpressionType
+        get() = ExpressionType.ARITHMETIC
+}
 
-class ElementToken : Token
+class ElementToken : Token() {
+    override val expressionType: ExpressionType
+        get() = ExpressionType.ARITHMETIC
+}
 
 enum class Operation(
     val operationChar: Char,
