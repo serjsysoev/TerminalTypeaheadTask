@@ -29,3 +29,7 @@ tasks.withType<KotlinCompile> {
 application {
     mainClassName = "MainKt"
 }
+
+val run by tasks.getting(JavaExec::class) {
+    standardInput = System.`in`
+}

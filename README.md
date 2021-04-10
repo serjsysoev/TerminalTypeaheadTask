@@ -4,7 +4,7 @@ This program optimizes call-chain that consists of multiple filter/map calls
 down to one filter call followed by a map call.
 
 ## Usage
-//TODO Run ```./gradlew(.bat) run```
+Run ```./gradlew(.bat) run --console=plain```
 
 You need to pass the call-chain string representation to the input stream
 in the following format:
@@ -21,8 +21,10 @@ in the following format:
 <call-chain> ::= <call> | <call> “%>%” <call-chain>
 ```
 
-Arithmetic operators ("+", "-", "*") input and output types are number.
+Arithmetic operators ("+", "-", "*") input and output types are number, 
+comparison operators ("<", ">", "=") input type is number, output type is boolean, 
+logical operators ("&", "|") input and output types are boolean.
 
-Comparison operators ("<", ">", "=") input type is number, output type is boolean.
-
-Logical operators ("&", "|") input and output types are boolean.
+If call-chain syntax is incorrect, the program prints "SYNTAX ERROR",
+if operand type does not match the expected input type it prints "TYPE ERROR",
+otherwise it prints call-chain that consists of one filter call followed by a map call.

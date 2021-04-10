@@ -118,7 +118,7 @@ class Expression(val tokens: List<Token>) {
         for (token in tokens) {
             if (token is OperationToken) {
                 val secondOperand = stringsStack.removeLastOrNull() ?: throw InvalidStateException()
-                val firstOperand = stringsStack.removeLast() ?: throw InvalidStateException()
+                val firstOperand = stringsStack.removeLastOrNull() ?: throw InvalidStateException()
 
                 stringsStack.add("($firstOperand${token.operation.operationChar}$secondOperand)")
             } else stringsStack.add(token.toString())
@@ -147,7 +147,8 @@ class Expression(val tokens: List<Token>) {
 
                 Expression(NumberToken(number))
             } catch (ex: Exception) {
-                if (expressionString.first() != '(' || expressionString.last() != ')') throw InvalidSyntaxException()
+                if (expressionString.isEmpty() || expressionString.first() != '(' || expressionString.last() != ')')
+                    throw InvalidSyntaxException()
                 val expressionWithoutBrackets = expressionString.subSequence(1, expressionString.length - 1)
 
 
@@ -242,8 +243,7 @@ abstract class Token {
 data class OperationToken(
     val operation: Operation,
 ) : Token() {
-    override val expressionType: ExpressionType
-        get() = operation.expressionOutputType
+    override val expressionType: ExpressionType = operation.expressionOutputType
 }
 
 /**
@@ -254,8 +254,7 @@ data class OperationToken(
 data class NumberToken(
     val number: Int
 ) : Token() {
-    override val expressionType: ExpressionType
-        get() = ExpressionType.ARITHMETIC
+    override val expressionType: ExpressionType = ExpressionType.ARITHMETIC
 
     override fun toString(): String {
         return number.toString()
@@ -266,8 +265,7 @@ data class NumberToken(
  * [Token] that represents an element
  */
 class ElementToken : Token() {
-    override val expressionType: ExpressionType
-        get() = ExpressionType.ARITHMETIC
+    override val expressionType: ExpressionType = ExpressionType.ARITHMETIC
 
     override fun toString(): String {
         return "element"
