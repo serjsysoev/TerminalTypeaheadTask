@@ -141,7 +141,9 @@ class Expression(val tokens: List<Token>) {
             if (expressionString == "element") return Expression(ElementToken())
 
             return try {
-                val number = parseInt(expressionString, 0, expressionString.length, 10)
+                // this function could be optimized by using parseInt for CharSequence
+                // and using CharSequence implementation that doesn't copy underlying string on subSequence calls
+                val number = parseInt(expressionString.toString())
 
                 Expression(NumberToken(number))
             } catch (ex: Exception) {
@@ -187,7 +189,7 @@ class Expression(val tokens: List<Token>) {
      * You should not rely on this exception as it is not guaranteed to be thrown
      * if the object is in the invalid state.
      */
-    class InvalidStateException: Exception()
+    class InvalidStateException : Exception()
 }
 
 /**
