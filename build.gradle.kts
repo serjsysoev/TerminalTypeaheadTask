@@ -2,7 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.4.32"
-    id("application")
+    application
+    jacoco
 }
 
 group = "me.t3st"
@@ -32,4 +33,12 @@ application {
 
 val run by tasks.getting(JavaExec::class) {
     standardInput = System.`in`
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.isEnabled = true
+        csv.isEnabled = false
+        html.isEnabled = false
+    }
 }
