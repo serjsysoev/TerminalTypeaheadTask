@@ -34,6 +34,10 @@ test:
     paths:
       - build
       - .gradle
+  artifacts:
+    paths:
+      - build/reports/jacoco/test/jacocoTestReport.xml
+
 
 coverage:
   stage: visualize
