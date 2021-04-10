@@ -2,11 +2,11 @@ fun main() {
     val callChainString = readLine() ?: ""
 
     val callChain = try {
-        parseCallChain(callChainString)
-    } catch (syntaxError: SyntaxErrorException) {
+        CallChain.fromString(callChainString)
+    } catch (invalidSyntaxException: InvalidSyntaxException) {
         println("SYNTAX ERROR")
         return
-    } catch (typeError: TypeErrorException) {
+    } catch (invalidTypeException: InvalidTypeException) {
         println("TYPE ERROR")
         return
     }

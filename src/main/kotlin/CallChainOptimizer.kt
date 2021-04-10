@@ -2,6 +2,15 @@ import java.lang.IllegalArgumentException
 import java.util.*
 import kotlin.collections.ArrayList
 
+/**
+ * Optimizes [callChain] to the [CallChain] that consists of filter call, followed by map call.
+ * It also optimizes [call][Call] [expressions][Expression],
+ * for example ```((element+10)*(element+10)) -> ((element*element)+((20*element)+100))```.
+ *
+ * @param callChain [CallChain] to optimize
+ *
+ * @return optimized [CallChain]
+ */
 fun optimizeCallChain(callChain: CallChain): CallChain {
     var filterCall: Call? = null
     var mapCallPolynomialToken = PolynomialToken(arrayListOf(0, 1)) // map element -> element
@@ -36,13 +45,27 @@ private val emptyFilter = Call( // filter{(1=1)}
     Expression(listOf(NumberToken(1), NumberToken(1), OperationToken(Operation.EQUAL)))
 )
 
+/**
+ * [Token] that represents a polynomial where polynomial variable is element
+ */
 class PolynomialToken : Token {
+    override val expressionType: ExpressionType
+        get() = ExpressionType.ARITHMETIC
+
     private val polynomial: ArrayList<Int>
 
+    /**
+     * Constructs [PolynomialToken] from an ArrayList of coefficients
+     *
+     * @param polynomial [ArrayList] of coefficients starting from the lowest degree
+     */
     constructor(polynomial: ArrayList<Int> = arrayListOf()) {
         this.polynomial = polynomial
     }
 
+    /**
+     * Constructs [PolynomialToken] from an Expression
+     */
     constructor(expression: Expression) {
         val polynomialTokenStack = LinkedList<PolynomialToken>()
         expression.tokens.forEach {
@@ -61,17 +84,27 @@ class PolynomialToken : Token {
         polynomial = polynomialTokenStack.first.polynomial
     }
 
-    override val expressionType: ExpressionType
-        get() = ExpressionType.ARITHMETIC
-
-    fun performOperation(operation: Operation, polynomial: PolynomialToken) =
+    /**
+     * Construct a new polynomial that equals operation(this, [polynomialToken])
+     *
+     * @param operation [Operation] to perform
+     * @param polynomialToken second parameter for the operation
+     *
+     * @return result of operation(this, [polynomialToken])
+     *
+     * @throws InvalidTypeException if operation input or output type doesn't match [ExpressionType.ARITHMETIC]
+     */
+    fun performOperation(operation: Operation, polynomialToken: PolynomialToken) =
         when (operation) {
-            Operation.PLUS -> this + polynomial
-            Operation.MINUS -> this - polynomial
-            Operation.MULTIPLY -> this * polynomial
-            else -> throw TypeErrorException()
+            Operation.PLUS -> this + polynomialToken
+            Operation.MINUS -> this - polynomialToken
+            Operation.MULTIPLY -> this * polynomialToken
+            else -> throw InvalidTypeException()
         }
 
+    /**
+     * Returns sum of the polynomials
+     */
     operator fun plus(that: PolynomialToken): PolynomialToken {
         val answer = PolynomialToken()
         for (i in 0 until maxOf(this.polynomial.size, that.polynomial.size)) {
@@ -83,6 +116,9 @@ class PolynomialToken : Token {
         return answer
     }
 
+    /**
+     * Returns difference of the polynomials
+     */
     operator fun minus(that: PolynomialToken): PolynomialToken {
         val answer = PolynomialToken()
         for (i in 0 until maxOf(this.polynomial.size, that.polynomial.size)) {
@@ -94,6 +130,9 @@ class PolynomialToken : Token {
         return answer
     }
 
+    /**
+     * Returns product of the polynomials
+     */
     operator fun times(that: PolynomialToken): PolynomialToken {
         val answer = PolynomialToken()
         for (i in 0 until this.polynomial.size) {
@@ -113,6 +152,10 @@ class PolynomialToken : Token {
         }
     }
 
+    /**
+     * Converts [PolynomialToken] to the expression equivalent of this polynomial
+     * that does not contain [polynomial tokens][PolynomialToken]
+     */
     fun toExpression(): Expression {
         val tokensList = mutableListOf<Token>()
 
