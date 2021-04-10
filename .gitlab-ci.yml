@@ -1,7 +1,6 @@
 stages:
   - build
   - test
-  - jacoco
   - visualize
 
 # Disable the Gradle daemon for Continuous Integration servers as correctness
@@ -28,21 +27,7 @@ build:
 test:
   stage: test
   image: gradle:alpine
-  script: gradle test
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: pull
-    paths:
-      - build
-      - .gradle
-
-jacoco:
-  stage: jacoco
-  image: gradle:alpine
-  script: gradle jacocoTestReport
-  needs: [ "test" ]
-  dependencies:
-    - test
+  script: gradle test jacocoTestReport
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
@@ -56,9 +41,9 @@ coverage:
   script:
     - 'python /opt/cover2cover.py build/reports/jacoco/test/jacocoTestReport.xml src/main/kotlin > build/reports/coverage.xml'
     - 'python /opt/source2filename.py build/reports/coverage.xml'
-  needs: [ "jacoco" ]
+  needs: [ "test" ]
   dependencies:
-    - jacoco
+    - test
   artifacts:
     reports:
       cobertura: build/reports/coverage.xml
