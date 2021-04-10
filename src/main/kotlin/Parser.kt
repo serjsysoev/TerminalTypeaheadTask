@@ -1,18 +1,23 @@
 import java.lang.Integer.parseInt
+import java.util.*
+import java.util.regex.Pattern
 import kotlin.Exception
 
 fun parseCallChain(callChain: String): CallChain {
     val callStrings = callChain.split("%>%").filter { it.isNotEmpty() }
     if (callStrings.isEmpty()) throw SyntaxErrorException()
 
-    return callStrings.map { parseCall(it) }
+    val calls = callStrings.map { parseCall(it) }
+    return CallChain(calls)
 }
 
+private val callPattern = Pattern.compile("""^(filter|map)\{(.*)}$""")
 private fun parseCall(call: String): Call {
-    val strings = call.split("{", "}").filter { it.isNotEmpty() }
-    if (strings.size > 2) throw SyntaxErrorException()
+    val callMatcher = callPattern.matcher(call)
+    if (!callMatcher.find() || callMatcher.groupCount() != 2) throw SyntaxErrorException()
 
-    val (typeString, expressionString) = strings
+    val typeString = callMatcher.group(1)
+    val expressionString = callMatcher.group(2)
 
     return Call(
         CallType.getCallTypeByString(typeString),
@@ -64,7 +69,11 @@ private fun findOperationPosition(expression: CharSequence): Int {
     throw SyntaxErrorException()
 }
 
-typealias CallChain = List<Call>
+data class CallChain(val calls: List<Call>) {
+    override fun toString(): String {
+        return calls.joinToString("%>%")
+    }
+}
 
 data class Call(
     val type: CallType,
@@ -74,6 +83,10 @@ data class Call(
         if (type.expressionType != expression.type) {
             throw TypeErrorException()
         }
+    }
+
+    override fun toString(): String {
+        return "${type.typeString}{$expression}"
     }
 }
 
@@ -98,6 +111,22 @@ class Expression(
     constructor(token: Token) : this(listOf(token))
 
     val type: ExpressionType = tokens.last().expressionType
+
+    override fun toString(): String {
+        val stringsStack = LinkedList<String>()
+
+        for (token in tokens) {
+            if (token is OperationToken) {
+                val secondOperand = stringsStack.removeLast()
+                val firstOperand = stringsStack.removeLast()
+
+                stringsStack.add("($firstOperand${token.operation.operationChar}$secondOperand)")
+            } else stringsStack.add(token.toString())
+        }
+
+        if (stringsStack.size != 1) TODO("Maybe I need to guarantee this wouldn't happen")
+        return stringsStack.first
+    }
 }
 
 enum class ExpressionType {
@@ -120,11 +149,19 @@ data class NumberToken(
 ) : Token() {
     override val expressionType: ExpressionType
         get() = ExpressionType.ARITHMETIC
+
+    override fun toString(): String {
+        return number.toString()
+    }
 }
 
 class ElementToken : Token() {
     override val expressionType: ExpressionType
         get() = ExpressionType.ARITHMETIC
+
+    override fun toString(): String {
+        return "element"
+    }
 }
 
 enum class Operation(
