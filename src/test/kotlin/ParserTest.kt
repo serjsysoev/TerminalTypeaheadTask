@@ -265,6 +265,27 @@ class ExpressionTest {
     }
 
     @Test
+    fun `fromString starts with unary minus`() {
+        val expression = Expression.fromString("(-3*element)")
+        assertEquals(expression.tokens.size, 3, "Wrong number of tokens")
+
+        val token1 = expression.tokens[0]
+        assertEquals(NumberToken::class, token1::class, "Incorrect NumberToken parsing")
+        assertEquals(-3, (token1 as NumberToken).number, "NumberToken.number is wrong")
+
+        val token2 = expression.tokens[1]
+        assertEquals(ElementToken::class, token2::class, "Incorrect ElementToken parsing")
+
+        val token3 = expression.tokens[2]
+        assertEquals(OperationToken::class, token3::class, "Incorrect OperationToken parsing")
+        assertEquals(
+            Operation.MULTIPLY,
+            (token3 as OperationToken).operation,
+            "Incorrect OperationToken.operation parsing"
+        )
+    }
+
+    @Test
     fun `fromString wrong types`() {
         assertThrows<InvalidTypeException> {
             Expression.fromString("((3<5)+1)")

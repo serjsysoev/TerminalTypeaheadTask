@@ -192,7 +192,8 @@ class Expression {
                 when (char) {
                     '(' -> openBracketsCount++
                     ')' -> openBracketsCount--
-                    in Operation.values().map { it.operationChar } -> if (openBracketsCount == 0) return index
+                    in Operation.values().map { it.operationChar } ->
+                        if (openBracketsCount == 0 && index != 0) return index
                 }
             }
 

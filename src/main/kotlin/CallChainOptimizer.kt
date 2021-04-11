@@ -2,6 +2,7 @@ import java.lang.Exception
 import java.lang.IllegalArgumentException
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.abs
 
 /**
  * Optimizes [callChain] to the [CallChain] that consists of filter call, followed by map call.
@@ -48,33 +49,33 @@ fun optimizeCallChain(callChain: CallChain): CallChain = try {
 }
 
 private fun optimizeFilterTokens(tokens: List<Token>): List<Token> {
-        val answer = LinkedList<Token>()
+    val answer = LinkedList<Token>()
 
-        for (token in tokens) {
-            if (token !is OperationToken) {
-                answer.add(PolynomialToken(Expression(token)))
-                continue
-            }
-
-            val operation = token.operation
-
-            // this could be further optimized
-            if (operation.operandExpressionType == ExpressionType.BOOLEAN) {
-                answer.add(token)
-                continue
-            }
-
-            val secondPolynomialToken = answer.removeLast() as PolynomialToken
-            val firstPolynomialToken = answer.removeLast() as PolynomialToken
-
-            if (operation.expressionOutputType == ExpressionType.ARITHMETIC) {
-                answer.add(firstPolynomialToken.performOperation(operation, secondPolynomialToken))
-            } else {
-                answer.addAll(optimizeComparisonOperator(firstPolynomialToken, secondPolynomialToken, operation))
-            }
+    for (token in tokens) {
+        if (token !is OperationToken) {
+            answer.add(PolynomialToken(Expression(token)))
+            continue
         }
 
-        return answer
+        val operation = token.operation
+
+        // this could be further optimized
+        if (operation.operandExpressionType == ExpressionType.BOOLEAN) {
+            answer.add(token)
+            continue
+        }
+
+        val secondPolynomialToken = answer.removeLast() as PolynomialToken
+        val firstPolynomialToken = answer.removeLast() as PolynomialToken
+
+        if (operation.expressionOutputType == ExpressionType.ARITHMETIC) {
+            answer.add(firstPolynomialToken.performOperation(operation, secondPolynomialToken))
+        } else {
+            answer.addAll(optimizeComparisonOperator(firstPolynomialToken, secondPolynomialToken, operation))
+        }
+    }
+
+    return answer
 }
 
 private fun optimizeComparisonOperator(
@@ -88,9 +89,17 @@ private fun optimizeComparisonOperator(
 
     val result = secondPolynomialToken - firstPolynomialToken
 
-    if (result.polynomial == listOf(0)) {
+    if (operation == Operation.EQUAL && result.polynomial.size == 1) {
         return listOf(
-            NumberToken(if (operation == Operation.EQUAL) 1 else 0),
+            NumberToken(if (result.polynomial.first() == 0) 1 else 0),
+            NumberToken(1),
+            OperationToken(Operation.EQUAL)
+        )
+    }
+
+    if (operation == Operation.LESS && result.polynomial.size == 1) {
+        return listOf(
+            NumberToken(if (result.polynomial.first() > 0) 1 else 0),
             NumberToken(1),
             OperationToken(Operation.EQUAL)
         )
@@ -221,23 +230,30 @@ class PolynomialToken : Token {
     fun toExpression(): Expression {
         val tokensList = mutableListOf<Token>()
 
-        var nonZeroCoefficientsCount = 0
+        val signTokens = mutableListOf<OperationToken>()
 
         mutablePolynomial.forEachIndexedReversed { index, coefficient ->
             if (coefficient == 0) return@forEachIndexedReversed
-            nonZeroCoefficientsCount++
 
-            if (coefficient == 1 && index > 0) {
+            if (abs(coefficient) == 1 && index > 0) {
                 repeat(index) { tokensList.add(ElementToken()) }
                 repeat(maxOf(index - 1, 0)) { tokensList.add(OperationToken(Operation.MULTIPLY)) }
             } else {
-                tokensList.add(NumberToken(coefficient))
+                tokensList.add(NumberToken(abs(coefficient)))
                 repeat(index) { tokensList.add(ElementToken()) }
                 repeat(index) { tokensList.add(OperationToken(Operation.MULTIPLY)) }
             }
+
+            if (index != mutablePolynomial.lastIndex) {
+                if (coefficient < 0) {
+                    tokensList.add(OperationToken(Operation.MINUS))
+                } else {
+                    tokensList.add(OperationToken(Operation.PLUS))
+                }
+            }
         }
 
-        repeat(maxOf(nonZeroCoefficientsCount - 1, 0)) { tokensList.add(OperationToken(Operation.PLUS)) }
+        tokensList.addAll(signTokens)
 
         if (tokensList.isEmpty()) tokensList.add(NumberToken(0))
         return Expression(tokensList)
