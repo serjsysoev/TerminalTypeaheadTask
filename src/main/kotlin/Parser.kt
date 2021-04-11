@@ -1,3 +1,4 @@
+import java.lang.IllegalArgumentException
 import java.lang.Integer.parseInt
 import java.util.*
 import java.util.regex.Pattern
@@ -25,7 +26,7 @@ data class CallChain(val calls: List<Call>) {
          * @param callChainString string representation of [CallChain]
          *
          * @throws InvalidSyntaxException if call-chain string representation is incorrect and cannot be parsed
-         * @throws InvalidTypeException if operands of operator/call does not match its input types
+         * @throws InvalidTypeException if operands of operator/call do not match its input types
          */
         fun fromString(callChainString: String): CallChain {
             val callStrings = callChainString.split("%>%").filter { it.isNotEmpty() }
@@ -41,7 +42,7 @@ data class CallChain(val calls: List<Call>) {
  * Represents a call (see README.md)
  *
  * @property type [type][CallType] of your call
- * @property expression [expression][Expression] that a call executes
+ * @property expression [expression][Expression] that the call executes
  *
  * @constructor creates a new Call instance
  * @throws InvalidTypeException if [type].expressionType does not match [expression].type
@@ -65,12 +66,12 @@ data class Call(
 
     companion object {
         /**
-         * Parses string representation of call to [Call] object.
+         * Parses string representation of the call to [Call] object.
          *
          * @param callString string representation of [Call]
          *
          * @throws InvalidSyntaxException if call string representation is incorrect and cannot be parsed
-         * @throws InvalidTypeException if operands of operator/call does not match its input types
+         * @throws InvalidTypeException if operands of operator/call do not match its input types
          */
         fun fromString(callString: String): Call {
             val callMatcher = callPattern.matcher(callString)
@@ -91,16 +92,30 @@ data class Call(
 
 /**
  * Represents an expression (see README.md)
- *
- * @property tokens list of [tokens][Token] in a reverse-polish notation.
- * The expression should always be correct.
- * If expression is not executable .toString may throw an exception or produce invalid expression string
  */
-class Expression(val tokens: List<Token>) {
+class Expression {
     /**
      * [ExpressionType] of the whole expression
      */
-    val type: ExpressionType = tokens.last().expressionType
+    val type: ExpressionType
+        get() = tokens.last().expressionType
+
+    /**
+     * list of [tokens][Token] in a reverse-polish notation
+     */
+    val tokens: List<Token>
+
+    /**
+     * Constructs [Expression] from a list of tokens
+     * The list of tokens should represent correct expression.
+     * If expression is not executable .toString may throw an exception or produce invalid expression string
+     *
+     * @throws IllegalArgumentException if [tokensList] is empty
+     */
+    constructor(tokensList: List<Token>) {
+        if (tokensList.isEmpty()) throw IllegalArgumentException()
+        tokens = tokensList
+    }
 
     /**
      * Constructs [Expression] from a single token
@@ -135,7 +150,7 @@ class Expression(val tokens: List<Token>) {
          * @param expressionString string representation of [Expression]
          *
          * @throws InvalidSyntaxException if expression string representation is incorrect and cannot be parsed
-         * @throws InvalidTypeException if operands of operator does not match its input types
+         * @throws InvalidTypeException if operands of operator do not match its input types
          */
         fun fromString(expressionString: CharSequence): Expression {
             if (expressionString == "element") return Expression(ElementToken())
@@ -210,7 +225,7 @@ enum class CallType(val typeString: String, val expressionType: ExpressionType) 
          *
          * @param typeString string representation of the [CallType]
          *
-         * @throws InvalidSyntaxException there is no [CallType] that is represented by this [typeString]
+         * @throws InvalidSyntaxException if there is no [CallType] that is represented by this [typeString]
          */
         fun fromString(typeString: String): CallType = typeStringToOperation.getOrElse(typeString) {
             throw InvalidSyntaxException()
@@ -230,7 +245,7 @@ enum class ExpressionType {
  */
 abstract class Token {
     /**
-     * [ExpressionType] of expression if its last operation was this token
+     * [ExpressionType] of expression if its last token was this token
      */
     abstract val expressionType: ExpressionType
 }
@@ -270,6 +285,14 @@ class ElementToken : Token() {
     override fun toString(): String {
         return "element"
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is ElementToken
+    }
+
+    override fun hashCode(): Int {
+        return "element".hashCode()
+    }
 }
 
 /**
@@ -294,7 +317,7 @@ enum class Operation(
     OR('|', ExpressionType.BOOLEAN, ExpressionType.BOOLEAN);
 
     /**
-     * Verifies that operands [expression types][ExpressionType] are supported by this operation
+     * Verifies that operands' [expression types][ExpressionType] are supported by this operation
      */
     fun verifyOperandTypes(operand1: ExpressionType, operand2: ExpressionType) {
         if (operand1 != operandExpressionType || operand2 != operandExpressionType) {

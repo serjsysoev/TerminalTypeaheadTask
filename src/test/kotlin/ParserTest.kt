@@ -31,10 +31,10 @@ class CallChainTest {
         assertEquals(CallType.MAP, call.type, "Incorrect call type")
 
         val expression = call.expression
-        assertEquals(1, expression.tokens.size, "Expression does not consists of one token")
+        assertEquals(1, expression.tokens.size, "Incorrect number of tokens")
         assertEquals(
             ElementToken::class, expression.tokens.first()::class,
-            "Expression token class doesn't match"
+            "Expression token classes do not match"
         )
     }
 
@@ -48,14 +48,14 @@ class CallChainTest {
     @Test
     fun `fromString one call`() {
         val callChain = CallChain.fromString(callString)
-        assertEquals(1, callChain.calls.size, "Incorrect amount of calls")
+        assertEquals(1, callChain.calls.size, "Incorrect number of calls")
         verifyCall(callChain.calls.first())
     }
 
     @Test
     fun `fromString two calls`() {
         val callChain = CallChain.fromString("$callString%>%$callString")
-        assertEquals(2, callChain.calls.size, "Incorrect amount of calls")
+        assertEquals(2, callChain.calls.size, "Incorrect number of calls")
         verifyCall(callChain.calls[0])
         verifyCall(callChain.calls[1])
     }
