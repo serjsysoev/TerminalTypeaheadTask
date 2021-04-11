@@ -29,7 +29,7 @@ class OptimizeCallChainTest {
     }
 
     @Test
-    fun `filter optimization always equals`() {
+    fun `filter optimization always equal`() {
         testCallChain(
             "filter{(1=1)}%>%map{element}",
             "filter{((element+3)=(element+3))}"
@@ -37,7 +37,7 @@ class OptimizeCallChainTest {
     }
 
     @Test
-    fun `filter optimization always not equals`() {
+    fun `filter optimization always not equal`() {
         testCallChain(
             "filter{(0=1)}%>%map{element}",
             "filter{((element+2)=(element+3))}"
@@ -101,6 +101,30 @@ class OptimizeCallChainTest {
     }
 
     @Test
+    fun `multiple filter`() {
+        testCallChain(
+            "filter{((0<((-1*element)+10))&(0<(element-2)))}%>%map{element}",
+            "filter{(element>2)}%>%filter{(10>element)}",
+        )
+    }
+
+    @Test
+    fun `multiple map`() {
+        testCallChain(
+            "filter{(1=1)}%>%map{((15*element)+7)}",
+            "map{(1+(5*element))}%>%map{((element*3)+4)}",
+        )
+    }
+
+    @Test
+    fun `filter with multiple map`() {
+        testCallChain(
+            "filter{(0<(((25*(element*element))-(15*element))-3))}%>%map{((-15*element)+7)}",
+            "map{(1+(-5*element))}%>%filter{((element*element)>((2-element)+3))}%>%map{((element*3)+4)}",
+        )
+    }
+
+    @Test
     fun `malformed input`() {
         val malformedCallChain = CallChain(
             listOf(
@@ -127,6 +151,13 @@ class PolynomialTokenTest {
     }
 
     @Test
+    fun `constructor list of indices empty list`() {
+        assertThrows<IllegalArgumentException> {
+            PolynomialToken(listOf())
+        }
+    }
+
+    @Test
     fun `constructor expression NumberToken`() {
         val polynomialToken = PolynomialToken(Expression(NumberToken(3)))
         assertTrue { polynomialToken.compareTo(3) }
@@ -142,11 +173,7 @@ class PolynomialTokenTest {
     fun `constructor expression PolynomialToken`() {
         val polynomialToken = PolynomialToken(
             Expression(
-                PolynomialToken(
-                    listOf(
-                        1, 2, 4, 3,
-                    )
-                )
+                PolynomialToken(listOf(1, 2, 4, 3))
             )
         )
         assertTrue { polynomialToken.compareTo(1, 2, 4, 3) }
@@ -164,6 +191,20 @@ class PolynomialTokenTest {
             )
         )
         assertTrue { polynomialToken.compareTo(3, 1) }
+    }
+
+    @Test
+    fun `constructor invalid expression`() {
+        assertThrows<IllegalArgumentException> {
+            PolynomialToken(
+                Expression(
+                    listOf(
+                        NumberToken(3),
+                        ElementToken(),
+                    )
+                )
+            )
+        }
     }
 
     @Test

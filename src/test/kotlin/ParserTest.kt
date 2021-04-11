@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import java.lang.IllegalArgumentException
 import kotlin.test.assertEquals
 
 class CallChainTest {
@@ -144,6 +145,13 @@ class ExpressionTest {
     }
 
     @Test
+    fun `constructor throws`() {
+        assertThrows<IllegalArgumentException> {
+            Expression(emptyList())
+        }
+    }
+
+    @Test
     fun `toString one token`() {
         val expression = Expression(ElementToken())
         assertEquals("element", expression.toString())
@@ -177,7 +185,7 @@ class ExpressionTest {
 
     @Test
     fun `toString too many operations`() {
-        assertThrows<Expression.InvalidStateException> {
+        assertThrows<Expression.InvalidStateException>("failed with one operand") {
             Expression(
                 listOf(
                     NumberToken(-3),
@@ -186,6 +194,9 @@ class ExpressionTest {
                     OperationToken(Operation.PLUS),
                 )
             ).toString()
+        }
+        assertThrows<Expression.InvalidStateException>("failed with no operands") {
+            Expression(listOf(OperationToken(Operation.PLUS))).toString()
         }
     }
 
@@ -355,6 +366,9 @@ class OperationTest {
     fun `verifyOperandTypes incorrect ExpressionType`() {
         assertThrows<InvalidTypeException> {
             Operation.PLUS.verifyOperandTypes(ExpressionType.BOOLEAN, ExpressionType.ARITHMETIC)
+        }
+        assertThrows<InvalidTypeException> {
+            Operation.PLUS.verifyOperandTypes(ExpressionType.ARITHMETIC, ExpressionType.BOOLEAN)
         }
     }
 

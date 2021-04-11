@@ -38,7 +38,5 @@ val run by tasks.getting(JavaExec::class) {
 tasks.jacocoTestReport {
     reports {
         xml.isEnabled = true
-        csv.isEnabled = false
-        html.isEnabled = false
     }
 }

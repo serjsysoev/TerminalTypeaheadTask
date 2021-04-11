@@ -139,6 +139,8 @@ class PolynomialToken : Token {
 
     /**
      * Constructs [PolynomialToken] from an Expression
+     *
+     * @throws IllegalArgumentException if Expression is invalid and cannot be parsed to [PolynomialToken]
      */
     constructor(expression: Expression) {
         val polynomialTokenStack = LinkedList<PolynomialToken>()
@@ -235,7 +237,11 @@ class PolynomialToken : Token {
         mutablePolynomial.forEachIndexedReversed { index, coefficient ->
             if (coefficient == 0) return@forEachIndexedReversed
 
-            if (abs(coefficient) == 1 && index > 0) {
+            if (index == mutablePolynomial.lastIndex && coefficient != 1) {
+                tokensList.add(NumberToken(coefficient))
+                repeat(index) { tokensList.add(ElementToken()) }
+                repeat(index) { tokensList.add(OperationToken(Operation.MULTIPLY)) }
+            } else if (abs(coefficient) == 1 && index > 0) {
                 repeat(index) { tokensList.add(ElementToken()) }
                 repeat(maxOf(index - 1, 0)) { tokensList.add(OperationToken(Operation.MULTIPLY)) }
             } else {

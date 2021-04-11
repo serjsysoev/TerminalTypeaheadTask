@@ -28,3 +28,11 @@ in the following format:
 If call-chain syntax is incorrect, the program prints "SYNTAX ERROR",
 if operand type does not match the expected input type it prints "TYPE ERROR",
 otherwise it prints call-chain that consists of one filter call followed by a map call.
+
+# Testing
+You can run tests by ```./gradlew(.bat) test```
+
+To get coverage results from jacoco run ```./gradlew(.bat) jacocoTestReport```.
+This will produce html page and a xml file in build/reports/jacoco/test folder.
+
+**NOTE:** run tests before executing jacocoTestReport
