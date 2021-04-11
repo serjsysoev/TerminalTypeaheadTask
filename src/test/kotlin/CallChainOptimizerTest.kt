@@ -29,10 +29,34 @@ class OptimizeCallChainTest {
     }
 
     @Test
-    fun `filter optimization 1`() {
+    fun `filter optimization always equals`() {
+        testCallChain(
+            "filter{(1=1)}%>%map{element}",
+            "filter{((element+3)=(element+3))}"
+        )
+    }
+
+    @Test
+    fun `filter optimization always not equals`() {
         testCallChain(
             "filter{(0=1)}%>%map{element}",
-            "filter{(element>element)}"
+            "filter{((element+2)=(element+3))}"
+        )
+    }
+
+    @Test
+    fun `filter optimization always less`() {
+        testCallChain(
+            "filter{(1=1)}%>%map{element}",
+            "filter{((element+2)<(element+3))}"
+        )
+    }
+
+    @Test
+    fun `filter optimization always not less`() {
+        testCallChain(
+            "filter{(0=1)}%>%map{element}",
+            "filter{((element+3)<(element+3))}"
         )
     }
 
@@ -47,8 +71,16 @@ class OptimizeCallChainTest {
     @Test
     fun `map optimization`() {
         testCallChain(
-            "filter{(1=1)}%>%map{((element*element)+((20*element)+100))}",
+            "filter{(1=1)}%>%map{(((element*element)+(20*element))+100)}",
             "map{((element+10)*(element+10))}"
+        )
+    }
+
+    @Test
+    fun `map optimization with minus`() {
+        testCallChain(
+            "filter{(1=1)}%>%map{(((element*element)-(20*element))+100)}",
+            "map{((element-10)*(element-10))}"
         )
     }
 
@@ -63,7 +95,7 @@ class OptimizeCallChainTest {
     @Test
     fun `filter arithmetics optimization`() {
         testCallChain(
-            "filter{(0<-7)}%>%map{element}",
+            "filter{(0=1)}%>%map{element}",
             "filter{((element+3)<(element-4))}"
         )
     }
