@@ -1,8 +1,7 @@
-# This file is a template, and might need editing before it works on your project.
-# This is the Gradle build system for JVM applications
-# https://gradle.org/
-# https://github.com/gradle/gradle
-image: gradle:alpine
+stages:
+  - build
+  - test
+  - visualize
 
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
@@ -16,6 +15,7 @@ before_script:
 
 build:
   stage: build
+  image: gradle:alpine
   script: gradle --build-cache assemble
   cache:
     key: "$CI_COMMIT_REF_NAME"
@@ -26,10 +26,28 @@ build:
 
 test:
   stage: test
-  script: gradle check
+  image: gradle:alpine
+  script: gradle test jacocoTestReport
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
     paths:
       - build
       - .gradle
+  artifacts:
+    paths:
+      - build/reports/jacoco/test/jacocoTestReport.xml
+
+
+coverage:
+  stage: visualize
+  image: registry.gitlab.com/haynes/jacoco2cobertura:1.0.7
+  script:
+    - 'python /opt/cover2cover.py build/reports/jacoco/test/jacocoTestReport.xml src/main/kotlin > build/reports/coverage.xml'
+    - 'python /opt/source2filename.py build/reports/coverage.xml'
+  needs: [ "test" ]
+  dependencies:
+    - test
+  artifacts:
+    reports:
+      cobertura: build/reports/coverage.xml

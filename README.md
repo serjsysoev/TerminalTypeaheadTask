@@ -1,7 +1,7 @@
 # Call-chain optimizer
 
 This program optimizes call-chain that consists of multiple filter/map calls 
-down to one filter call followed by a map call.
+down to one filter call followed by a map call. It puts polynomials into standard form.
 
 ## Usage
 Run ```./gradlew(.bat) run --console=plain```
@@ -21,9 +21,9 @@ in the following format:
 <call-chain> ::= <call> | <call> “%>%” <call-chain>
 ```
 
-Arithmetic operators ("+", "-", "*") input and output types are number, 
-comparison operators ("<", ">", "=") input type is number, output type is boolean, 
-logical operators ("&", "|") input and output types are boolean.
+* For arithmetic operators ("+", "-", "*"), input and output types are "number"
+* For comparison operators ("<", ">", "="), input type is "number", output type is boolean
+* For logical operators ("&", "|"), input and output types are boolean
 
 If call-chain syntax is incorrect, the program prints "SYNTAX ERROR",
 if operand type does not match the expected input type it prints "TYPE ERROR",
